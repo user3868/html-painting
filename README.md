@@ -1,7 +1,6 @@
 # html-painting
 
 ![绘制示例](images/Picture1.png)
-![Drawing Example](images/Picture2.png)
 
 ## Introduction
 
