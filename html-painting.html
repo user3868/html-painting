@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Canvas Drawing and Eraser with Brush Size and Color Picker</title>
+<style>
+  canvas {
+    border: 1px solid #000;
+  }
+  .active {
+    background-color: lightblue;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="drawingCanvas" width="500" height="500"></canvas>
+<button id="convertBtn">转换为Canvas代码 (Convert to Canvas Code)</button>
+<button id="clearBtn">清空画布 (Clear Canvas)</button>
+<button id="eraserBtn">橡皮擦 (Eraser)</button>
+<button id="pencilBtn">画笔 (Pen)</button>
+<label for="brushSize">笔大小 (Brush Size):</label>
+<input type="number" id="brushSize" value="10">
+<label for="brushColor">颜色 (Color):</label>
+<input type="color" id="brushColor" value="#000000">
+<textarea id="codeOutput" rows="10" cols="50" style="display:block;"></textarea>
+
+<script>
+const canvas = document.getElementById('drawingCanvas');
+const ctx = canvas.getContext('2d');
+let isDrawing = false;
+let isErasing = false;
+let brushSize = parseInt(document.getElementById('brushSize').value, 10);
+let brushColor = document.getElementById('brushColor').value;
+const drawingOperations = [];
+
+function startDrawing(e) {
+  isDrawing = true;
+  addDrawingOperation(e.offsetX, e.offsetY, true);
+}
+
+function draw(e) {
+  if (!isDrawing) return;
+  addDrawingOperation(e.offsetX, e.offsetY, false);
+}
+
+function addDrawingOperation(x, y, moveTo) {
+  drawingOperations.push({ x, y, size: brushSize, color: isErasing ? 'white' : brushColor, moveTo });
+  if (moveTo) {
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  } else {
+    ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = isErasing ? 'white' : brushColor;
+  ctx.lineWidth = brushSize;
+  ctx.stroke();
+}
+
+function stopDrawing() {
+  isDrawing = false;
+}
+
+canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', stopDrawing);
+
+document.getElementById('brushSize').addEventListener('change', (e) => {
+  brushSize = parseInt(e.target.value, 10);
+});
+
+document.getElementById('brushColor').addEventListener('change', (e) => {
+  if (!isErasing) {
+    brushColor = e.target.value;
+  }
+});
+
+document.getElementById('eraserBtn').addEventListener('click', () => {
+  isErasing = true;
+  document.getElementById('eraserBtn').classList.add('active');
+  document.getElementById('pencilBtn').classList.remove('active');
+});
+
+document.getElementById('pencilBtn').addEventListener('click', () => {
+  isErasing = false;
+  brushColor = document.getElementById('brushColor').value; // Restore the brush color
+  document.getElementById('eraserBtn').classList.remove('active');
+  document.getElementById('pencilBtn').classList.add('active');
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawingOperations.length = 0; // Clear the operations
+});
+
+document.getElementById('convertBtn').addEventListener('click', () => {
+  let codeOutput = document.getElementById('codeOutput');
+  let htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Canvas Drawing Export</title>
+<style>
+  canvas {
+    border: 1px solid #000;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="drawingCanvas" width="500" height="500"></canvas>
+
+<script>
+  const canvas = document.getElementById('drawingCanvas');
+  const ctx = canvas.getContext('2d');
+`;
+
+  drawingOperations.forEach(op => {
+    if (op.moveTo) {
+      htmlContent += `  ctx.beginPath();\n`;
+      htmlContent += `  ctx.moveTo(${op.x}, ${op.y});\n`;
+    } else {
+      htmlContent += `  ctx.lineTo(${op.x}, ${op.y});\n`;
+      htmlContent += `  ctx.strokeStyle = '${op.color}';\n`;
+      htmlContent += `  ctx.lineWidth = ${op.size};\n`;
+      htmlContent += `  ctx.stroke();\n`;
+    }
+  });
+
+  htmlContent += `</scr` + `ipt>
+</body>
+</html>
+`;
+
+  codeOutput.value = htmlContent;
+});
+</script>
+
+</body>
+</html>
